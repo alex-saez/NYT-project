@@ -1,0 +1,255 @@
+
+R version 3.1.1 (2014-07-10) -- "Sock it to Me"
+Copyright (C) 2014 The R Foundation for Statistical Computing
+Platform: x86_64-w64-mingw32/x64 (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> 
+> library(rvest)
+Loading required package: xml2
+Warning messages:
+1: package 'rvest' was built under R version 3.1.3 
+2: package 'xml2' was built under R version 3.1.3 
+> 
+> setwd("/Users/Alex/Dropbox/NYT project/")
+> 
+> source("./code/parse_link.R")
+> source("./code/parse_article.R")
+> source("./code/convert_date.R")
+> source("./code/clean_special.R")
+> source("./code/check_link.R")
+> source("./code/check_article.R")
+> source("./code/add_article.R")
+> source("./code/get_curr_date.R")
+> source("./code/add_to_log.R")
+> source("./code/label_popular.R")
+> 
+> 
+> ##################################################################
+> 
+> scrape_pages <- function(database=list()){
++   
++   pages = c("http://www.nytimes.com/pages/world/",  
++             "http://www.nytimes.com/pages/business/",  
++             "http://www.nytimes.com/pages/technology/",  
++             "http://www.nytimes.com/pages/sports/",  
++             "http://www.nytimes.com/pages/arts/",  
++             "http://www.nytimes.com/pages/realestate/",  
++             "http://www.nytimes.com/pages/opinion/",  
++             "http://www.nytimes.com/pages/dining/")
++   
++   for(section in pages){
++     cat("\n")
++     
++     page = html(section)
++     links = html_attr(html_nodes(page, "h1 a, h2 a, h3 a"),"href")
++     
++     if(length(links)==0)
++       add_to_log(paste("NO ARTICLES FOUND in:", section))    
++     
++     for(l in 1:length(links)){
++       sectionname = strsplit(section, "/")[[1]][5]
++       cat("\r", sectionname, ": ", l, "  of ", length(links))
++       
++       database = add_article(database, links[l])
++     }
++   }
++   
++   return(database)
++   
++ }
+> 
+> ##################################################################
+> 
+> scrape_sections <- function(database=list()){
++   
++   sections = c("http://www.nytimes.com/section/us/",  
++                "http://www.nytimes.com/section/nyregion/",  
++                "http://www.nytimes.com/section/science/",  
++                "http://www.nytimes.com/section/health/",  
++                "http://www.nytimes.com/section/fashion/",  
++                "http://www.nytimes.com/section/travel/",  
++                "http://www.nytimes.com/section/magazine/",  
++                "http://www.nytimes.com/section/obituaries/",  
++                "http://www.nytimes.com/section/t-magazine/",
++                "http://www.nytimes.com/section/upshot/", 
++                "http://www.nytimes.com/section/books/")
++   
++   for(section in sections){
++     cat("\n")
++     
++     page = html(section)
++     links = html_attr(html_nodes(page, ".headline a, #latest-panel .story-body a"),"href")
++ 
++     if(length(links)==0)
++       add_to_log(paste("NO ARTICLES FOUND in:", section))    
++     
++     for(l in 1:length(links)){
++       sectionname = strsplit(section, "/")[[1]][5]
++       cat("\r", sectionname, ": ", l, "  of ", length(links))
++       
++       database = add_article(database, links[l])
++     }
++   }
++ 
++   return(database)
++   
++ }
+> 
+> 
+> ##################################################################
+> 
+> get_popular <- function(database=list()){
++   # most emailed:
++   cat("\n")
++   section = "http://www.nytimes.com/services/xml/rss/nyt/pop_top.xml"
++   page = html(section)
++   links = html_text(html_nodes(page, css = "guid"))
++   if(length(links)==0) stop(c("Unable to get Most Emailed list"))    
++   for(i in 1:length(links)){    
++     cat("\r", "Most Emailed:",i,"articles of",length(links))
++     importance = 100*(length(links)+1-i)/length(links)
++     database = label_popular(database, links[i], "most emailed", importance)
++   }
++ 
++   # most shared:
++   cat("\n")
++   section = "http://rss.nytimes.com/services/xml/rss/nyt/MostShared.xml"
++   page = html(section)
++   links = html_text(html_nodes(page, css = "guid"))
++   if(length(links)==0) stop(c("Unable to get Most Shared list"))    
++   for(i in 1:length(links)){    
++     cat("\r", "Most Shared:",i,"articles of",length(links))
++     importance = 100*(length(links)+1-i)/length(links)
++     database = label_popular(database, links[i], "most shared", importance)
++   }
++ 
++   # most viewed:
++   cat("\n")
++   section = "http://rss.nytimes.com/services/xml/rss/nyt/MostViewed.xml"
++   page = html(section)
++   links = html_text(html_nodes(page, css = "guid"))
++   if(length(links)==0) stop(c("Unable to get Most Viewed list"))    
++   for(i in 1:length(links)){    
++     cat("\r", "Most Viewed:",i,"articles of",length(links))
++     importance = 100*(length(links)+1-i)/length(links)
++     database = label_popular(database, links[i], "most viewed", importance)
++   }
++   
++   return(database)
++   
++ }
+> 
+> ##################################################################
+> ##################################################################
+> 
+> load("./data/database.RData")
+> 
+> n_prev = nrow(database)
+> 
+> add_to_log(paste(Sys.time()))
+> 
+> database = scrape_pages(database)
+
+ world :  1   of  48 world :  2   of  48 world :  3   of  48 world :  4   of  48 world :  5   of  48 world :  6   of  48 world :  7   of  48 world :  8   of  48 world :  9   of  48 world :  10   of  48 world :  11   of  48 world :  12   of  48 world :  13   of  48 world :  14   of  48 world :  15   of  48 world :  16   of  48 world :  17   of  48 world :  18   of  48 world :  19   of  48 world :  20   of  48 world :  21   of  48 world :  22   of  48 world :  23   of  48 world :  24   of  48 world :  25   of  48 world :  26   of  48 world :  27   of  48 world :  28   of  48 world :  29   of  48 world :  30   of  48 world :  31   of  48 world :  32   of  48 world :  33   of  48 world :  34   of  48 world :  35   of  48 world :  36   of  48 world :  37   of  48 world :  38   of  48 world :  39   of  48 world :  40   of  48 world :  41   of  48 world :  42   of  48 world :  43   of  48 world :  44   of  48 world :  45   of  48 world :  46   of  48 world :  47   of  48 world :  48   of  48
+ business :  1   of  33 business :  2   of  33 business :  3   of  33 business :  4   of  33 business :  5   of  33 business :  6   of  33 business :  7   of  33 business :  8   of  33 business :  9   of  33 business :  10   of  33 business :  11   of  33 business :  12   of  33 business :  13   of  33 business :  14   of  33 business :  15   of  33 business :  16   of  33 business :  17   of  33 business :  18   of  33 business :  19   of  33 business :  20   of  33 business :  21   of  33 business :  22   of  33 business :  23   of  33 business :  24   of  33 business :  25   of  33 business :  26   of  33 business :  27   of  33 business :  28   of  33 business :  29   of  33 business :  30   of  33 business :  31   of  33 business :  32   of  33 business :  33   of  33
+ technology :  1   of  23 technology :  2   of  23 technology :  3   of  23 technology :  4   of  23 technology :  5   of  23 technology :  6   of  23 technology :  7   of  23 technology :  8   of  23 technology :  9   of  23 technology :  10   of  23 technology :  11   of  23 technology :  12   of  23 technology :  13   of  23 technology :  14   of  23 technology :  15   of  23 technology :  16   of  23 technology :  17   of  23 technology :  18   of  23 technology :  19   of  23 technology :  20   of  23 technology :  21   of  23 technology :  22   of  23 technology :  23   of  23
+ sports :  1   of  22 sports :  2   of  22 sports :  3   of  22 sports :  4   of  22 sports :  5   of  22 sports :  6   of  22 sports :  7   of  22 sports :  8   of  22 sports :  9   of  22 sports :  10   of  22 sports :  11   of  22 sports :  12   of  22 sports :  13   of  22 sports :  14   of  22 sports :  15   of  22 sports :  16   of  22 sports :  17   of  22 sports :  18   of  22 sports :  19   of  22 sports :  20   of  22 sports :  21   of  22 sports :  22   of  22
+ arts :  1   of  11 arts :  2   of  11 arts :  3   of  11 arts :  4   of  11 arts :  5   of  11 arts :  6   of  11 arts :  7   of  11 arts :  8   of  11 arts :  9   of  11 arts :  10   of  11 arts :  11   of  11
+ realestate :  1   of  52 realestate :  2   of  52 realestate :  3   of  52 realestate :  4   of  52 realestate :  5   of  52 realestate :  6   of  52 realestate :  7   of  52 realestate :  8   of  52 realestate :  9   of  52 realestate :  10   of  52 realestate :  11   of  52 realestate :  12   of  52 realestate :  13   of  52 realestate :  14   of  52 realestate :  15   of  52 realestate :  16   of  52 realestate :  17   of  52 realestate :  18   of  52 realestate :  19   of  52 realestate :  20   of  52 realestate :  21   of  52 realestate :  22   of  52 realestate :  23   of  52 realestate :  24   of  52 realestate :  25   of  52 realestate :  26   of  52 realestate :  27   of  52 realestate :  28   of  52 realestate :  29   of  52 realestate :  30   of  52 realestate :  31   of  52 realestate :  32   of  52 realestate :  33   of  52 realestate :  34   of  52 realestate :  35   of  52 realestate :  36   of  52 realestate :  37   of  52 realestate :  38   of  52 realestate :  39   of  52 realestate :  40   of  52 realestate :  41   of  52 realestate :  42   of  52 realestate :  43   of  52 realestate :  44   of  52 realestate :  45   of  52 realestate :  46   of  52 realestate :  47   of  52 realestate :  48   of  52 realestate :  49   of  52 realestate :  50   of  52 realestate :  51   of  52 realestate :  52   of  52
+ opinion :  1   of  48 opinion :  2   of  48 opinion :  3   of  48 opinion :  4   of  48 opinion :  5   of  48 opinion :  6   of  48 opinion :  7   of  48 opinion :  8   of  48 opinion :  9   of  48 opinion :  10   of  48 opinion :  11   of  48 opinion :  12   of  48 opinion :  13   of  48 opinion :  14   of  48 opinion :  15   of  48 opinion :  16   of  48 opinion :  17   of  48 opinion :  18   of  48 opinion :  19   of  48 opinion :  20   of  48 opinion :  21   of  48 opinion :  22   of  48 opinion :  23   of  48 opinion :  24   of  48 opinion :  25   of  48 opinion :  26   of  48 opinion :  27   of  48 opinion :  28   of  48 opinion :  29   of  48 opinion :  30   of  48 opinion :  31   of  48 opinion :  32   of  48 opinion :  33   of  48 opinion :  34   of  48 opinion :  35   of  48 opinion :  36   of  48 opinion :  37   of  48 opinion :  38   of  48 opinion :  39   of  48 opinion :  40   of  48 opinion :  41   of  48 opinion :  42   of  48 opinion :  43   of  48 opinion :  44   of  48 opinion :  45   of  48 opinion :  46   of  48 opinion :  47   of  48 opinion :  48   of  48
+ dining :  1   of  62 dining :  2   of  62 dining :  3   of  62 dining :  4   of  62 dining :  5   of  62 dining :  6   of  62 dining :  7   of  62 dining :  8   of  62 dining :  9   of  62 dining :  10   of  62 dining :  11   of  62 dining :  12   of  62 dining :  13   of  62 dining :  14   of  62 dining :  15   of  62 dining :  16   of  62 dining :  17   of  62 dining :  18   of  62 dining :  19   of  62 dining :  20   of  62 dining :  21   of  62 dining :  22   of  62 dining :  23   of  62 dining :  24   of  62 dining :  25   of  62 dining :  26   of  62 dining :  27   of  62 dining :  28   of  62 dining :  29   of  62 dining :  30   of  62 dining :  31   of  62 dining :  32   of  62 dining :  33   of  62 dining :  34   of  62 dining :  35   of  62 dining :  36   of  62 dining :  37   of  62 dining :  38   of  62 dining :  39   of  62 dining :  40   of  62 dining :  41   of  62 dining :  42   of  62 dining :  43   of  62 dining :  44   of  62 dining :  45   of  62 dining :  46   of  62 dining :  47   of  62 dining :  48   of  62 dining :  49   of  62 dining :  50   of  62 dining :  51   of  62 dining :  52   of  62 dining :  53   of  62 dining :  54   of  62 dining :  55   of  62 dining :  56   of  62 dining :  57   of  62 dining :  58   of  62 dining :  59   of  62 dining :  60   of  62 dining :  61   of  62 dining :  62   of  62Warning messages:
+1: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+2: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+3: In parse_link(link, tags) : NAs introduced by coercion
+4: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+5: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+6: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+7: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+8: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+9: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+> database = scrape_sections(database)
+
+ us :  1   of  29 us :  2   of  29 us :  3   of  29 us :  4   of  29 us :  5   of  29 us :  6   of  29 us :  7   of  29 us :  8   of  29 us :  9   of  29 us :  10   of  29 us :  11   of  29 us :  12   of  29 us :  13   of  29 us :  14   of  29 us :  15   of  29 us :  16   of  29 us :  17   of  29 us :  18   of  29 us :  19   of  29 us :  20   of  29 us :  21   of  29 us :  22   of  29 us :  23   of  29 us :  24   of  29 us :  25   of  29 us :  26   of  29 us :  27   of  29 us :  28   of  29 us :  29   of  29
+ nyregion :  1   of  29 nyregion :  2   of  29 nyregion :  3   of  29 nyregion :  4   of  29 nyregion :  5   of  29 nyregion :  6   of  29 nyregion :  7   of  29 nyregion :  8   of  29 nyregion :  9   of  29 nyregion :  10   of  29 nyregion :  11   of  29 nyregion :  12   of  29 nyregion :  13   of  29 nyregion :  14   of  29 nyregion :  15   of  29 nyregion :  16   of  29 nyregion :  17   of  29 nyregion :  18   of  29 nyregion :  19   of  29 nyregion :  20   of  29 nyregion :  21   of  29 nyregion :  22   of  29 nyregion :  23   of  29 nyregion :  24   of  29 nyregion :  25   of  29 nyregion :  26   of  29 nyregion :  27   of  29 nyregion :  28   of  29 nyregion :  29   of  29
+ science :  1   of  34 science :  2   of  34 science :  3   of  34 science :  4   of  34 science :  5   of  34 science :  6   of  34 science :  7   of  34 science :  8   of  34 science :  9   of  34 science :  10   of  34 science :  11   of  34 science :  12   of  34 science :  13   of  34 science :  14   of  34 science :  15   of  34 science :  16   of  34 science :  17   of  34 science :  18   of  34 science :  19   of  34 science :  20   of  34 science :  21   of  34 science :  22   of  34 science :  23   of  34 science :  24   of  34 science :  25   of  34 science :  26   of  34 science :  27   of  34 science :  28   of  34 science :  29   of  34 science :  30   of  34 science :  31   of  34 science :  32   of  34 science :  33   of  34 science :  34   of  34
+ health :  1   of  34 health :  2   of  34 health :  3   of  34 health :  4   of  34 health :  5   of  34 health :  6   of  34 health :  7   of  34 health :  8   of  34 health :  9   of  34 health :  10   of  34 health :  11   of  34 health :  12   of  34 health :  13   of  34 health :  14   of  34 health :  15   of  34 health :  16   of  34 health :  17   of  34 health :  18   of  34 health :  19   of  34 health :  20   of  34 health :  21   of  34 health :  22   of  34 health :  23   of  34 health :  24   of  34 health :  25   of  34 health :  26   of  34 health :  27   of  34 health :  28   of  34 health :  29   of  34 health :  30   of  34 health :  31   of  34 health :  32   of  34 health :  33   of  34 health :  34   of  34
+ fashion :  1   of  64 fashion :  2   of  64 fashion :  3   of  64 fashion :  4   of  64 fashion :  5   of  64 fashion :  6   of  64 fashion :  7   of  64 fashion :  8   of  64 fashion :  9   of  64 fashion :  10   of  64 fashion :  11   of  64 fashion :  12   of  64 fashion :  13   of  64 fashion :  14   of  64 fashion :  15   of  64 fashion :  16   of  64 fashion :  17   of  64 fashion :  18   of  64 fashion :  19   of  64 fashion :  20   of  64 fashion :  21   of  64 fashion :  22   of  64 fashion :  23   of  64 fashion :  24   of  64 fashion :  25   of  64 fashion :  26   of  64 fashion :  27   of  64 fashion :  28   of  64 fashion :  29   of  64 fashion :  30   of  64 fashion :  31   of  64 fashion :  32   of  64 fashion :  33   of  64 fashion :  34   of  64 fashion :  35   of  64 fashion :  36   of  64 fashion :  37   of  64 fashion :  38   of  64 fashion :  39   of  64 fashion :  40   of  64 fashion :  41   of  64 fashion :  42   of  64 fashion :  43   of  64 fashion :  44   of  64 fashion :  45   of  64 fashion :  46   of  64 fashion :  47   of  64 fashion :  48   of  64 fashion :  49   of  64 fashion :  50   of  64 fashion :  51   of  64 fashion :  52   of  64 fashion :  53   of  64 fashion :  54   of  64 fashion :  55   of  64 fashion :  56   of  64 fashion :  57   of  64 fashion :  58   of  64 fashion :  59   of  64 fashion :  60   of  64 fashion :  61   of  64 fashion :  62   of  64 fashion :  63   of  64 fashion :  64   of  64
+ travel :  1   of  29 travel :  2   of  29 travel :  3   of  29 travel :  4   of  29 travel :  5   of  29 travel :  6   of  29 travel :  7   of  29 travel :  8   of  29 travel :  9   of  29 travel :  10   of  29 travel :  11   of  29 travel :  12   of  29 travel :  13   of  29 travel :  14   of  29 travel :  15   of  29 travel :  16   of  29 travel :  17   of  29 travel :  18   of  29 travel :  19   of  29 travel :  20   of  29 travel :  21   of  29 travel :  22   of  29 travel :  23   of  29 travel :  24   of  29 travel :  25   of  29 travel :  26   of  29 travel :  27   of  29 travel :  28   of  29 travel :  29   of  29
+ magazine :  1   of  30 magazine :  2   of  30 magazine :  3   of  30 magazine :  4   of  30 magazine :  5   of  30 magazine :  6   of  30 magazine :  7   of  30 magazine :  8   of  30 magazine :  9   of  30 magazine :  10   of  30 magazine :  11   of  30 magazine :  12   of  30 magazine :  13   of  30 magazine :  14   of  30 magazine :  15   of  30 magazine :  16   of  30 magazine :  17   of  30 magazine :  18   of  30 magazine :  19   of  30 magazine :  20   of  30 magazine :  21   of  30 magazine :  22   of  30 magazine :  23   of  30 magazine :  24   of  30 magazine :  25   of  30 magazine :  26   of  30 magazine :  27   of  30 magazine :  28   of  30 magazine :  29   of  30 magazine :  30   of  30
+ obituaries :  1   of  29 obituaries :  2   of  29 obituaries :  3   of  29 obituaries :  4   of  29 obituaries :  5   of  29 obituaries :  6   of  29 obituaries :  7   of  29 obituaries :  8   of  29 obituaries :  9   of  29 obituaries :  10   of  29 obituaries :  11   of  29 obituaries :  12   of  29 obituaries :  13   of  29 obituaries :  14   of  29 obituaries :  15   of  29 obituaries :  16   of  29 obituaries :  17   of  29 obituaries :  18   of  29 obituaries :  19   of  29 obituaries :  20   of  29 obituaries :  21   of  29 obituaries :  22   of  29 obituaries :  23   of  29 obituaries :  24   of  29 obituaries :  25   of  29 obituaries :  26   of  29 obituaries :  27   of  29 obituaries :  28   of  29 obituaries :  29   of  29
+ t-magazine :  1   of  60 t-magazine :  2   of  60 t-magazine :  3   of  60 t-magazine :  4   of  60 t-magazine :  5   of  60 t-magazine :  6   of  60 t-magazine :  7   of  60 t-magazine :  8   of  60 t-magazine :  9   of  60 t-magazine :  10   of  60 t-magazine :  11   of  60 t-magazine :  12   of  60 t-magazine :  13   of  60 t-magazine :  14   of  60 t-magazine :  15   of  60 t-magazine :  16   of  60 t-magazine :  17   of  60 t-magazine :  18   of  60 t-magazine :  19   of  60 t-magazine :  20   of  60 t-magazine :  21   of  60 t-magazine :  22   of  60 t-magazine :  23   of  60 t-magazine :  24   of  60 t-magazine :  25   of  60 t-magazine :  26   of  60 t-magazine :  27   of  60 t-magazine :  28   of  60 t-magazine :  29   of  60 t-magazine :  30   of  60 t-magazine :  31   of  60 t-magazine :  32   of  60 t-magazine :  33   of  60 t-magazine :  34   of  60 t-magazine :  35   of  60 t-magazine :  36   of  60 t-magazine :  37   of  60 t-magazine :  38   of  60 t-magazine :  39   of  60 t-magazine :  40   of  60 t-magazine :  41   of  60 t-magazine :  42   of  60 t-magazine :  43   of  60 t-magazine :  44   of  60 t-magazine :  45   of  60 t-magazine :  46   of  60 t-magazine :  47   of  60 t-magazine :  48   of  60 t-magazine :  49   of  60 t-magazine :  50   of  60 t-magazine :  51   of  60 t-magazine :  52   of  60 t-magazine :  53   of  60 t-magazine :  54   of  60 t-magazine :  55   of  60 t-magazine :  56   of  60 t-magazine :  57   of  60 t-magazine :  58   of  60 t-magazine :  59   of  60 t-magazine :  60   of  60
+ upshot :  1   of  37 upshot :  2   of  37 upshot :  3   of  37 upshot :  4   of  37 upshot :  5   of  37 upshot :  6   of  37 upshot :  7   of  37 upshot :  8   of  37 upshot :  9   of  37 upshot :  10   of  37 upshot :  11   of  37 upshot :  12   of  37 upshot :  13   of  37 upshot :  14   of  37 upshot :  15   of  37 upshot :  16   of  37 upshot :  17   of  37 upshot :  18   of  37 upshot :  19   of  37 upshot :  20   of  37 upshot :  21   of  37 upshot :  22   of  37 upshot :  23   of  37 upshot :  24   of  37 upshot :  25   of  37 upshot :  26   of  37 upshot :  27   of  37 upshot :  28   of  37 upshot :  29   of  37 upshot :  30   of  37 upshot :  31   of  37 upshot :  32   of  37 upshot :  33   of  37 upshot :  34   of  37 upshot :  35   of  37 upshot :  36   of  37 upshot :  37   of  37
+ books :  1   of  34 books :  2   of  34 books :  3   of  34 books :  4   of  34 books :  5   of  34 books :  6   of  34 books :  7   of  34 books :  8   of  34 books :  9   of  34 books :  10   of  34 books :  11   of  34 books :  12   of  34 books :  13   of  34 books :  14   of  34 books :  15   of  34 books :  16   of  34 books :  17   of  34 books :  18   of  34 books :  19   of  34 books :  20   of  34 books :  21   of  34 books :  22   of  34 books :  23   of  34 books :  24   of  34 books :  25   of  34 books :  26   of  34 books :  27   of  34 books :  28   of  34 books :  29   of  34 books :  30   of  34 books :  31   of  34 books :  32   of  34 books :  33   of  34 books :  34   of  34There were 19 warnings (use warnings() to see them)
+> database = get_popular(database)
+
+ Most Emailed: 1 articles of 40 Most Emailed: 2 articles of 40 Most Emailed: 3 articles of 40 Most Emailed: 4 articles of 40 Most Emailed: 5 articles of 40 Most Emailed: 6 articles of 40 Most Emailed: 7 articles of 40 Most Emailed: 8 articles of 40 Most Emailed: 9 articles of 40 Most Emailed: 10 articles of 40 Most Emailed: 11 articles of 40 Most Emailed: 12 articles of 40 Most Emailed: 13 articles of 40 Most Emailed: 14 articles of 40 Most Emailed: 15 articles of 40 Most Emailed: 16 articles of 40 Most Emailed: 17 articles of 40 Most Emailed: 18 articles of 40 Most Emailed: 19 articles of 40 Most Emailed: 20 articles of 40 Most Emailed: 21 articles of 40 Most Emailed: 22 articles of 40 Most Emailed: 23 articles of 40 Most Emailed: 24 articles of 40 Most Emailed: 25 articles of 40 Most Emailed: 26 articles of 40 Most Emailed: 27 articles of 40 Most Emailed: 28 articles of 40 Most Emailed: 29 articles of 40 Most Emailed: 30 articles of 40 Most Emailed: 31 articles of 40 Most Emailed: 32 articles of 40 Most Emailed: 33 articles of 40 Most Emailed: 34 articles of 40 Most Emailed: 35 articles of 40 Most Emailed: 36 articles of 40 Most Emailed: 37 articles of 40 Most Emailed: 38 articles of 40 Most Emailed: 39 articles of 40 Most Emailed: 40 articles of 40
+ Most Shared: 1 articles of 60 Most Shared: 2 articles of 60 Most Shared: 3 articles of 60 Most Shared: 4 articles of 60 Most Shared: 5 articles of 60 Most Shared: 6 articles of 60 Most Shared: 7 articles of 60 Most Shared: 8 articles of 60 Most Shared: 9 articles of 60 Most Shared: 10 articles of 60 Most Shared: 11 articles of 60 Most Shared: 12 articles of 60 Most Shared: 13 articles of 60 Most Shared: 14 articles of 60 Most Shared: 15 articles of 60 Most Shared: 16 articles of 60 Most Shared: 17 articles of 60 Most Shared: 18 articles of 60 Most Shared: 19 articles of 60 Most Shared: 20 articles of 60 Most Shared: 21 articles of 60 Most Shared: 22 articles of 60 Most Shared: 23 articles of 60 Most Shared: 24 articles of 60 Most Shared: 25 articles of 60 Most Shared: 26 articles of 60 Most Shared: 27 articles of 60 Most Shared: 28 articles of 60 Most Shared: 29 articles of 60 Most Shared: 30 articles of 60 Most Shared: 31 articles of 60 Most Shared: 32 articles of 60 Most Shared: 33 articles of 60 Most Shared: 34 articles of 60 Most Shared: 35 articles of 60 Most Shared: 36 articles of 60 Most Shared: 37 articles of 60 Most Shared: 38 articles of 60 Most Shared: 39 articles of 60 Most Shared: 40 articles of 60 Most Shared: 41 articles of 60 Most Shared: 42 articles of 60 Most Shared: 43 articles of 60 Most Shared: 44 articles of 60 Most Shared: 45 articles of 60 Most Shared: 46 articles of 60 Most Shared: 47 articles of 60 Most Shared: 48 articles of 60 Most Shared: 49 articles of 60 Most Shared: 50 articles of 60 Most Shared: 51 articles of 60 Most Shared: 52 articles of 60 Most Shared: 53 articles of 60 Most Shared: 54 articles of 60 Most Shared: 55 articles of 60 Most Shared: 56 articles of 60 Most Shared: 57 articles of 60 Most Shared: 58 articles of 60 Most Shared: 59 articles of 60 Most Shared: 60 articles of 60
+ Most Viewed: 1 articles of 37 Most Viewed: 2 articles of 37 Most Viewed: 3 articles of 37 Most Viewed: 4 articles of 37 Most Viewed: 5 articles of 37 Most Viewed: 6 articles of 37 Most Viewed: 7 articles of 37 Most Viewed: 8 articles of 37 Most Viewed: 9 articles of 37 Most Viewed: 10 articles of 37 Most Viewed: 11 articles of 37 Most Viewed: 12 articles of 37 Most Viewed: 13 articles of 37 Most Viewed: 14 articles of 37 Most Viewed: 15 articles of 37 Most Viewed: 16 articles of 37 Most Viewed: 17 articles of 37 Most Viewed: 18 articles of 37 Most Viewed: 19 articles of 37 Most Viewed: 20 articles of 37 Most Viewed: 21 articles of 37 Most Viewed: 22 articles of 37 Most Viewed: 23 articles of 37 Most Viewed: 24 articles of 37 Most Viewed: 25 articles of 37 Most Viewed: 26 articles of 37 Most Viewed: 27 articles of 37 Most Viewed: 28 articles of 37 Most Viewed: 29 articles of 37 Most Viewed: 30 articles of 37 Most Viewed: 31 articles of 37 Most Viewed: 32 articles of 37 Most Viewed: 33 articles of 37 Most Viewed: 34 articles of 37 Most Viewed: 35 articles of 37 Most Viewed: 36 articles of 37 Most Viewed: 37 articles of 37Warning messages:
+1: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+2: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+3: 'html' is deprecated.
+Use 'read_html' instead.
+See help("Deprecated") 
+4: In parse_link(link) : NAs introduced by coercion
+> 
+> add_to_log(paste(Sys.time(), nrow(database)-n_prev, "articles added", 
++                  "\n----------------------------------------------------------------------------------------"))
+> 
+> save(database, file="./data/database.RData")
+> 
+> 
+> 
+> 
+> # database = data.frame(id = numeric(),
+> #                       url = numeric(),
+> #                       title = numeric(),
+> #                       author = numeric(),
+> #                       section = numeric(),
+> #                       tags = numeric(),
+> #                       date = numeric(),
+> #                       content = numeric(), 
+> #                       date_in = numeric(), 
+> #                       most_emailed = numeric(), 
+> #                       most_shared = numeric(), 
+> #                       most_viewed = numeric())
+> 
+> 
+> 
+> 
+> proc.time()
+   user  system elapsed 
+ 223.45    5.66  671.21 
