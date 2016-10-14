@@ -1,4 +1,4 @@
-# Find most indicative words for a document to belong in a specific actgory
+# Find most indicative words for a document to belong in a specific category
 #
 # dtm: document-term matrix, in simple-triplet format
 # y: vector of row indices of documents of interest (e.g. 'most emailed')
