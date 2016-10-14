@@ -1,6 +1,8 @@
 
 add_article <- function(database, link, tags=character()){
   
+  link = gsub('http://http://', 'http://', link)
+  
   if(grepl("?",link)) # trim link
     link = strsplit(link, "?", fixed = TRUE)[[1]][1]
   
