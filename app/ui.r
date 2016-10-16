@@ -9,7 +9,7 @@ shinyUI(
   fluidPage(
     
       # Application title
-      titlePanel("Over-represented words in popular New York Times articles"),
+      titlePanel("Overrepresented words in popular New York Times articles"),
       
       sidebarLayout(
         # Sidebar with a slider and selection inputs
@@ -42,7 +42,7 @@ shinyUI(
                      It is based on all articles published in The New York Times from March 15th to October 14th 2016.  The New
                      York Times compiles three daily lists of popular articles: Mose Emailed, Most Viewed and Most Shared. For each of 
                      these categories, each article received a score according to its rank within the list and the duration it remained 
-                     on the list. The slider allows to select a top percentile of these scores. ")
+                     on the list. The slider allows to select a top percentile of these scores.")
         )
         
 
