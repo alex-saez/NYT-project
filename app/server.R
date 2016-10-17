@@ -51,7 +51,7 @@ shinyServer(function(input, output) {
 
     wordcloud_rep(names(rel_freq_pop), rel_freq_pop, scale = c(4,0.5),
                   max.words = input$num_words,
-                  colors = brewer.pal(9, "Set1"))
+                  colors = brewer.pal(8, "Dark2"))
   })
   
   
