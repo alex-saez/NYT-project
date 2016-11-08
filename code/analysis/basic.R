@@ -9,7 +9,7 @@ data = database[grepl('e',database$content),] # only articles with content
 
 corp = VCorpus(VectorSource(data$content))
 
-dtm = DocumentTermMatrix(corp, control = list(stemming = TRUE,
+dtm = DocumentTermMatrix(corp, control = list(stemming = FALSE,
                                               bound = list(local = c(1, Inf)), 
                                               tokenize = "MC",
                                               removePunctuation = TRUE, 

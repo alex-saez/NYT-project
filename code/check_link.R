@@ -8,11 +8,25 @@ check_link <- function(link){
 
   if(length(link)>1) islinkgood= FALSE
   
+  
   # exclude links not strating in http:
   if(islinkgood && substr(link, 1, 4) != "http") islinkgood= FALSE
   
+  
+  
+  # ##   TEMP  #########################################
+  # link_parts = strsplit(link, "/")[[1]]
+  # if(islinkgood && strsplit(link_parts[3],".", fixed=TRUE)[[1]][2]=="blogs")
+  #   islinkgood= FALSE
+  # 
+  # ###########################################
+  
+  
   # exclude links to a "page not found":
   if(islinkgood && html_session(link)$response$status_code==404) islinkgood= FALSE
+  
+  # exclude links to a "page unavailable":
+  if(islinkgood && html_session(link)$response$status_code==410) islinkgood= FALSE
   
   
   

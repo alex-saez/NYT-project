@@ -82,3 +82,6 @@ data/topic_models*
 
 data/log.txt
 sections and tags.xlsx
+doc/~$results.pptx
+code/main.Rout
+doc/perplxity vs n topics.pdf
