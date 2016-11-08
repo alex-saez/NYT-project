@@ -5,7 +5,7 @@
 #
 # Returns vector of predictions
 
-dtm_naiveBayes_predict = function(NB, dtm, sections)
+naiveBayes_predict_dtm = function(NB, dtm, sections)
 {
 
   if(missing(sections))
@@ -30,9 +30,10 @@ dtm_naiveBayes_predict = function(NB, dtm, sections)
   log_posterior_y = log(prior) + dtm %*% NB$log.p.X.given.y
   log_posterior_noty = log(1-prior) + dtm %*% NB$log.p.X.given.noty
   
-  y_hat = as.logical(log_posterior_y>log_posterior_noty)
+  #y_hat = as.logical(log_posterior_y>log_posterior_noty)
   
-  return(y_hat)
+  return(list(log_p_y = log_posterior_y, 
+              log_p_noty = log_posterior_noty))
 }
 
 

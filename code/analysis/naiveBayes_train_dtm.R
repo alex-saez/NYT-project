@@ -1,12 +1,13 @@
-# train Naive Bayes to classify docs given:
-# dtm: document-term matrix in either regular (sparse) representation or as a dense, simple-triplet matrix
-# y: response variable, as logical vector of length nrow(dtm)
-# mu: Laplace smoothing, in multiples of 1/dtm$ncol. Optional, default=0
-# sections: char vector of length nrow(dtm) with the section for each document. Optional
-#
-# Returns list with the priors p(y) and p(y|section), and the 2 log-likelihoods log(p(X|y)) and log(p(X|not.y))
+# Train Naive Bayes to classify docs
+# INPUT:
+#     dtm: document-term matrix in either regular (sparse) representation or as a dense, simple-triplet matrix
+#     y: response variable, as logical vector of length nrow(dtm)
+#     mu: Laplace smoothing, in multiples of 1/dtm$ncol. Optional, default=0
+#     sections: char vector of length nrow(dtm) with the section for each document. Optional
+# OUTPUT:
+#     List with the priors p(y) and p(y|section), and the 2 log-likelihoods log(p(X|y)) and log(p(X|not.y))
 
-dtm_naiveBayes_train = function(dtm, y, mu=0, sections){
+naiveBayes_train_dtm = function(dtm, y, mu=0, sections){
   
   if(any(class(dtm) == "matrix")){
     
