@@ -1,58 +1,119 @@
 library(shiny)
+library(shinythemes)
 library(wordcloud)
-load("../data/ind_popular_Oct14.RData")
-load("../data/dtm_unstemmed_Oct14.RData")
-# load("../data/mutual_info_Oct14.RData")
+library(ggplot2)
+library(rvest)
+load("../output/ind_popular_Oct14.RData")
+load("../output/dtm_unstemmed_Oct14.RData")
+load("../output/naive Bayes/NB_Oct14.RData")
+load("../output/naive Bayes/all_log_p.RData")
+source("../code/analysis/naiveBayes_predict_doc.R")
+source("../code/analysis/important_terms.R")
+source("../code/parse_link.R")
+source("../code/parse_article.R")
 
 
 # compute word frequency
 terms = dtm$dimnames$Terms[dtm$j]
 word_counts = tapply(dtm$v, terms, sum)
 
-
 shinyServer(function(input, output) {
   
-  # read type of popular
+  ################################  FIRST TAB #########################################
+  
+  # read type of popular for word analysis
   pop_score = reactive({
-   switch(input$popular, 
-          'ME' = popular$most_emailed, 
-          'MV' = popular$most_viewed, 
-          'MS' = popular$most_shared 
-   )
- }) 
+    switch(input$popular, 
+           'ME' = popular$most_emailed, 
+           'MV' = popular$most_viewed, 
+           'MS' = popular$most_shared 
+    )
+  }) 
   
   
- # indices for most-popular articles:
- top_pop_ind = reactive({
-   pop = pop_score()
-   pop = pop[pop>0]
-   which(pop_score() %in% sort(pop, decreasing = TRUE)[1:(input$top_prop*length(pop)/100)])
- })
- 
-
+  # indices for most-popular articles:
+  top_pop_ind = reactive({
+    pop = pop_score()
+    pop = pop[pop>0]
+    which(pop_score() %in% sort(pop, decreasing = TRUE)[1:(input$top_prop*length(pop)/100)])
+  })
+  
+  
   # make the wordcloud drawing predictable during a session:
   wordcloud_rep <- repeatable(wordcloud)
-
+  
   output$wordcloud = renderPlot({
     
-    #rel_freq_pop = important_terms(dtm, top_pop_ind(), len=100, method="mi", tail="top")
-      
-    # compute word count in popular articles
-    word_counts_pop = tapply(dtm$v[dtm$i %in% top_pop_ind()], terms[dtm$i %in% top_pop_ind()], sum)
-    non_pop_terms = setdiff(terms, names(word_counts_pop)) # so that # terms is same as in word_counts
-    non_pop_terms = array(0, dim=length(non_pop_terms), dimnames=list(non_pop_terms))
-    word_counts_pop = c(word_counts_pop, non_pop_terms)
-    word_counts_pop = word_counts_pop[order(names(word_counts_pop))]
-
-    # compare word frequencies between POP and ALL:
-    term_freq = word_counts/sum(word_counts)
-    term_freq_pop = word_counts_pop/sum(word_counts_pop)
-    rel_freq_pop = term_freq_pop - term_freq
-
-    wordcloud_rep(names(rel_freq_pop), rel_freq_pop, scale = c(4,0.5),
+    indicative_terms = important_terms(dtm, top_pop_ind(), len=100, n_doc_min=5)
+    
+    wordcloud_rep(names(indicative_terms), indicative_terms, scale = c(4,0.5),
                   max.words = input$num_words,
                   colors = brewer.pal(8, "Dark2"))
   })
   
+  
+  ################################  SECOND TAB #########################################
+  
+  # get content to analyze, either from url or from text box
+  content = reactive({
+    
+    if(!is.null(input$doc) && grepl('[:alpha:]', input$doc))
+      return(input$doc)
+    
+    else{
+      doc = parse_article(input$url)
+      return(doc$content)
+    }
+    
+
+  })
+
+  # calculate score (log difference of p's) of sample article
+  score = reactive({
+    NB = switch(input$popular2, 
+           'ME' = NB$NB_me, 
+           'MV' = NB$NB_mv, 
+           'MS' = NB$NB_ms 
+    )
+    posterior = naiveBayes_predict_doc(NB, content())
+    score = posterior$log_p_y - posterior$log_p_noty
+    if(score > 100) score=100
+    if(score < -100) score=-100
+    return(score)
+  }) 
+  
+  # select population of posteriors based on type of popular
+  log_p = reactive({
+    switch(input$popular2, 
+           'ME' = all_log_p$ME, 
+           'MV' = all_log_p$MV, 
+           'MS' = all_log_p$MS 
+    )
+  }) 
+  
+
+  output$popular_score = renderPlot({
+    
+    diffs = log_p()$log_p_y - log_p()$log_p_noty
+    percentile = 100*mean(score()>diffs)
+    percentile = paste(as.character(round(percentile)), '%', sep='')
+    diffs = diffs[diffs>-100 & diffs<100]
+
+    # plot:
+    ggplot(NULL,aes(diffs))  +
+      ggtitle("How this article scores relative to database") + 
+      geom_histogram(bins=100, color="white") +
+      geom_vline(xintercept = 0, col='white', lwd=1, lty=2) +
+      theme(title=element_text(size=18),
+            axis.text=element_text(size=14),
+            axis.text.y=element_blank(),
+            axis.ticks=element_blank(),
+            axis.title.x=element_blank(),
+            axis.title.y=element_blank(),
+            legend.position="none",
+            panel.background=element_blank()) + 
+      geom_point(aes(x=score(), y=0), shape=23, color="black", fill='red', size=11, stroke=2) + 
+      annotate("text", x=score(), y=0, label=percentile, size=4, color='white')
+  })
   
 })
