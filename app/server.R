@@ -1,16 +1,17 @@
 library(shiny)
 library(shinythemes)
 library(wordcloud)
-library(ggplot2)
 library(rvest)
-load("../output/ind_popular_Oct14.RData")
-load("../output/dtm_unstemmed_Oct14.RData")
-load("../output/naive Bayes/NB_Oct14.RData")
-load("../output/naive Bayes/all_log_p.RData")
+library(tm)
+library(ggplot2)
 source("../code/analysis/naiveBayes_predict_doc.R")
 source("../code/analysis/important_terms.R")
 source("../code/parse_link.R")
 source("../code/parse_article.R")
+load("../output/ind_popular_Oct14.RData")
+load("../output/dtm_unstemmed_Oct14.RData")
+load("../output/naive Bayes/NB_Oct14.RData")
+load("../output/naive Bayes/all_log_p.RData")
 
 
 # compute word frequency
@@ -113,7 +114,7 @@ shinyServer(function(input, output) {
             legend.position="none",
             panel.background=element_blank()) + 
       geom_point(aes(x=score(), y=0), shape=23, color="black", fill='red', size=11, stroke=2) + 
-      annotate("text", x=score(), y=0, label=percentile, size=4, color='white')
+      ggplot2::annotate("text", x=score(), y=0, label=percentile, size=4, color='white')
   })
   
 })
