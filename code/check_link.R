@@ -14,12 +14,12 @@ check_link <- function(link){
   
   
   
-  # ##   TEMP  #########################################
-  # link_parts = strsplit(link, "/")[[1]]
-  # if(islinkgood && strsplit(link_parts[3],".", fixed=TRUE)[[1]][2]=="blogs")
-  #   islinkgood= FALSE
-  # 
-  # ###########################################
+  ##   TEMP  #########################################
+  link_parts = strsplit(link, "/")[[1]]
+  if(islinkgood && link_parts[3]=="conversation-pieces.adm.prd.newsdev.nytimes.com")
+    islinkgood= FALSE
+
+  ###########################################
   
   
   # exclude links to a "page not found":
