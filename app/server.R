@@ -114,7 +114,7 @@ shinyServer(function(input, output) {
             legend.position="none",
             panel.background=element_blank()) + 
       geom_point(aes(x=score(), y=0), shape=23, color="black", fill='red', size=11, stroke=2) + 
-      ggplot2::annotate("text", x=score(), y=0, label=percentile, size=4, color='white')
+      annotate("text", x=score(), y=0, label=percentile, size=4, color='white')
   })
   
 })
