@@ -1,7 +1,12 @@
-# Compute mutual information between a document indicator variable y and the different terms in a document-term matrix
-# Accepts DTM's in either regular (sparse) representation or as a dense, simple-triplet matrix
 
 dtm_mi = function(dtm, y){
+  # Compute mutual information between a document indicator variable y and the different terms in a document-term matrix
+  # Accepts DTM's in either regular (sparse) representation or as a dense, simple-triplet matrix
+  # INPUT:
+  #     dtm: in either regular (sparse) representation or as a dense, simple-triplet matrix
+  #     y: vector of row indices of documents of interest (e.g. 'most emailed')
+  # OUTPUT:
+  #     named vector of words and their mutual information with the y variable
   
   if(any(class(dtm) == "matrix")){
     

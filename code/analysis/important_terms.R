@@ -1,15 +1,15 @@
-# Find most indicative words for a document to belong in a specific category
-# INPUT:
-#     dtm: document-term matrix, in simple-triplet format
-#     y: vector of row indices of documents of interest (e.g. 'most emailed')
-#     len: number of most important terms to display. defaut 10
-#     method: either frequency change ('freq_diff', default) or mutual information ('mi')
-#     tail: whether to show most ('top', default) or least ('bottom') important terms
-#     n_doc_min: min number of documents of interest a word should appear in. Default =5
-# OUTPUT:
-#     named vector of words and their over/sub-representation metric, whether MI or freq diff
 
 important_terms = function(dtm, y, len=10, method="freq_diff", tail="top", n_doc_min=5){
+  # Find most indicative words for a document to belong in a specific category
+  # INPUT:
+  #     dtm: document-term matrix, in simple-triplet format
+  #     y: vector of row indices of documents of interest (e.g. 'most emailed')
+  #     len: number of most important terms to display. defaut 10
+  #     method: either frequency change ('freq_diff', default) or mutual information ('mi')
+  #     tail: whether to show most ('top', default) or least ('bottom') important terms
+  #     n_doc_min: min number of documents of interest a word should appear in. Default =5
+  # OUTPUT:
+  #     named vector of words and their over/sub-representation metric, whether MI or freq diff
   
   if(!any(class(dtm) == "simple_triplet_matrix"))
     stop("dtm must be a simple triplet matrix")
