@@ -9,7 +9,7 @@ shinyUI(
   
   navbarPage(tags$em("New York Times Project"), 
              id="nav",
-             theme = shinytheme('flatly'),
+             #theme = shinytheme('flatly'),
              
              ################################  FIRST TAB #########################################
              
