@@ -102,7 +102,7 @@ shinyServer(function(input, output) {
     percentile = 100*mean(score_x>diffs, na.rm=TRUE)
     percentile = paste(as.character(round(percentile)), '%', sep='')
     
-    xmin = -.7
+    xmin = -.5
     xmax = .5
     if(score_x < xmin) score_x = xmin
     if(score_x > xmax) score_x = xmax
