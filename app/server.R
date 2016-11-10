@@ -96,10 +96,18 @@ shinyServer(function(input, output) {
   output$popular_score = renderPlot({
     
     diffs = log_p()$log_p_y - log_p()$log_p_noty
-    percentile = 100*mean(score()>diffs)
+    diffs = diffs[!is.na(diffs)]
+    
+    score_x = score()
+    percentile = 100*mean(score_x>diffs, na.rm=TRUE)
     percentile = paste(as.character(round(percentile)), '%', sep='')
-    diffs = diffs[diffs>-100 & diffs<100]
-
+    
+    xmin = -.7
+    xmax = .5
+    if(score_x < xmin) score_x = xmin
+    if(score_x > xmax) score_x = xmax
+    diffs = diffs[diffs>xmin & diffs<xmax]
+    
     # plot:
     ggplot(NULL,aes(diffs))  +
       ggtitle("How this article scores relative to database") + 
@@ -113,8 +121,8 @@ shinyServer(function(input, output) {
             axis.title.y=element_blank(),
             legend.position="none",
             panel.background=element_blank()) + 
-      geom_point(aes(x=score(), y=0), shape=23, color="black", fill='red', size=11, stroke=2) + 
-      annotate("text", x=score(), y=0, label=percentile, size=4, color='white')
+      geom_point(aes(x=score_x, y=0), shape=23, color="black", fill='red', size=11, stroke=2) + 
+      annotate("text", x=score_x, y=0, label=percentile, size=4, color='white')
   })
   
 })

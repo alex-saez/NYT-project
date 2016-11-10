@@ -112,8 +112,8 @@ print(TP/(p.y*TP + (1-p.y)*FP))
 source('./code/analysis/naiveBayes_train_dtm.R')
 source('./code/analysis/naiveBayes_predict_doc.R')
 
-load("./data/dtm_unstemmed_Oct14.RData")
-load("./data/database_Oct14.RData")
+load("./output/dtm_unstemmed_Oct14.RData")
+load("./output/database_Oct14.RData")
 
 
 y_me = data$most_emailed >0
@@ -139,11 +139,11 @@ for(i in 1:nrow(data)){
 }
 
 all_log_p = list(ME=all_log_p_me, MS=all_log_p_ms, MV=all_log_p_mv)
-save(all_log_p, file='./output/naive Bayes/all_log_p.RData')
+save(all_log_p, file='./output/naive Bayes/all_log_p2.RData')
 
-hist(all_log_ps$log_p_y - all_log_ps$log_p_noty, 100)
-d = all_log_ps$log_p_y - all_log_ps$log_p_noty
-d = d[d>-100 & d<100]
+hist(all_log_p$ME$log_p_y - all_log_p$ME$log_p_noty, 100)
+d = all_log_p$ME$log_p_y - all_log_p$ME$log_p_noty
+d = d[d>-1 & d<1]
 hist(d,100)
 
 

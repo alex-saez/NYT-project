@@ -27,8 +27,8 @@ naiveBayes_predict_doc = function(NB, doc, section=NA)
                                      minWordLength = 3))
   
   
-  log_posterior_y = log(prior) + sum(doc * NB$log.p.X.given.y[names(doc)], na.rm = TRUE)
-  log_posterior_noty = log(1-prior) + sum(doc * NB$log.p.X.given.noty[names(doc)], na.rm = TRUE)
+  log_posterior_y = (log(prior) + sum(doc * NB$log.p.X.given.y[names(doc)], na.rm = TRUE)) /length(doc)
+  log_posterior_noty = (log(1-prior) + sum(doc * NB$log.p.X.given.noty[names(doc)], na.rm = TRUE)) /length(doc)
   
   #y_hat = log_posterior_y>log_posterior_noty
   
